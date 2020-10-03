@@ -1,5 +1,4 @@
 from bs4 import BeautifulSoup as soup
-from datetime import datetime
 import requests
 import re
 
@@ -18,12 +17,32 @@ def instagram(shortcode):
     if post_type == "video":
         video_url = page_soup.findAll("meta", {"property" : "og:video"})[0]['content']
         response = requests.get(video_url)
-        filename = datetime.strftime(datetime.now(), '%Y%m%d%H%M') + "_ig_" + shortcode
+        filename = "ig_" + shortcode
         with open(filename + ".mp4", "wb") as f:
             f.write(response.content)
         print("Download of Instagram Video {} completed.".format(shortcode))
     else:
         print("Provided Instagram URL is not a video!")
+
+def facebook(video_id):
+    page_html = requests.get("https://www.facebook.com/watch/?v=" + video_id).content
+    page_soup = soup(page_html, "html.parser")
+    post_type = page_soup.findAll("meta", {"name" : "medium"})[0]['content']
+    if post_type == "video":
+        video_url_sd = re.search(r'sd_src:"(.+?)"', str(page_html))[1]
+        video_url_hd = re.search(r'hd_src:"(.+?)"', str(page_html))[1]
+        if video_url_hd != None:
+            response = requests.get(video_url_hd)
+        elif video_url_sd != None:
+            response = requests.get(video_url_hd)
+        else:
+            print("Unable to download Facebook video {}.".format(video_id))
+        filename = "fb_" + video_id
+        with open(filename + ".mp4", "wb") as f:
+            f.write(response.content)
+        print("Download of Facebook Video {} completed.".format(video_id))
+    else:
+        print("Provided Facebook URL is not a video!")
 
 url = input("\nEnter a Video URL: ")
 platform = platform(url)
