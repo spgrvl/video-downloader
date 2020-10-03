@@ -5,10 +5,13 @@ import re
 def platform(url):
     fb_match = re.search(r'^(?:https?:\/\/)?(?:www\.|web\.|m\.)?facebook\..*(?:\/videos.*\/|v=)(\d+).*$', url)
     ig_match = re.search(r'^(?:https?:\/\/)?(?:www\.)?(?:instagram\.com.*\/(?:p|tv|reel)\/)([\d\w\-_]+)(?:\/)?(\?.*)?$', url)
+    tt_match = re.search(r'^(?:https?:\/\/)?(?:www\.|m\.)?(?:tiktok\.com.*\/(?:@(?:[\w]+))?(?:v|video|embed|trending)?(?:\/)?(?:video)?(?:\/)?(?:\?shareId=)?)([\d]+)', url)
     if fb_match != None:
         return "fb", fb_match[1]
     elif ig_match != None:
         return "ig", ig_match[1]
+    elif tt_match != None:
+        return "tt", tt_match[1]
 
 def instagram(shortcode):
     page_html = requests.get("https://www.instagram.com/p/" + shortcode).content
@@ -44,6 +47,19 @@ def facebook(video_id):
     else:
         print("Provided Facebook URL is not a video!")
 
+def tiktok(video_id):
+    page_html = requests.get("https://www.tiktok.com/embed/" + video_id).content
+    video_url = re.search(r'urls":\["(.+?)"]', str(page_html))[1]
+    if video_url != None:
+        headers = {'Connection': 'keep-alive', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.121 Safari/537.36', 'Accept': '*/*', 'Sec-Fetch-Site': 'cross-site', 'Sec-Fetch-Mode': 'no-cors', 'Sec-Fetch-Dest': 'video', 'Referer': 'https://www.tiktok.com/', 'Accept-Language': 'en-US,en;q=0.9', 'Range': 'bytes=0-'}
+        response = requests.get(video_url, headers=headers)
+        filename = "tt_" + video_id
+        with open(filename + ".mp4", "wb") as f:
+            f.write(response.content)
+        print("Download of TikTok Video {} completed.".format(video_id))
+    else:
+        print("Failed to download this TikTok video!")
+
 url = input("\nEnter a Video URL: ")
 platform = platform(url)
 
@@ -52,6 +68,8 @@ try:
         instagram(platform[1])
     elif platform[0] == "fb":
         facebook(platform[1])
+    elif platform[0] == "tt":
+        tiktok(platform[1])
 except TypeError:
     print("Failed to detect platform of given URL!")
 except Exception as e:
