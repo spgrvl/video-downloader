@@ -48,10 +48,10 @@ def facebook(video_id):
         print("Provided Facebook URL is not a video!")
 
 def tiktok(video_id):
-    page_html = requests.get("https://www.tiktok.com/embed/" + video_id).content
+    headers = {'Connection': 'keep-alive', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.121 Safari/537.36', 'Accept': '*/*', 'Sec-Fetch-Site': 'cross-site', 'Sec-Fetch-Mode': 'no-cors', 'Sec-Fetch-Dest': 'video', 'Referer': 'https://www.tiktok.com/', 'Accept-Language': 'en-US,en;q=0.9', 'Range': 'bytes=0-'}
+    page_html = requests.get("https://www.tiktok.com/embed/" + video_id, headers=headers).content
     video_url = re.search(r'urls":\["(.+?)"]', str(page_html))[1]
     if video_url != None:
-        headers = {'Connection': 'keep-alive', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.121 Safari/537.36', 'Accept': '*/*', 'Sec-Fetch-Site': 'cross-site', 'Sec-Fetch-Mode': 'no-cors', 'Sec-Fetch-Dest': 'video', 'Referer': 'https://www.tiktok.com/', 'Accept-Language': 'en-US,en;q=0.9', 'Range': 'bytes=0-'}
         response = requests.get(video_url, headers=headers)
         filename = "tt_" + video_id
         with open(filename + ".mp4", "wb") as f:
