@@ -1,5 +1,6 @@
 from bs4 import BeautifulSoup as soup
 from tkinter import Tk, Text, Label, Entry, Button, StringVar, END
+from tqdm import tqdm
 import argparse
 import requests
 import re
@@ -18,6 +19,22 @@ def print(msg):
         output.delete(1.0, END)
         output.insert(END, msg)
         output.configure(state="disabled")
+
+def dl(video_url, filename, headers=""):
+    if args.cli:
+        file_size_request = requests.get(video_url, stream=True, headers=headers)
+        file_size = int(file_size_request.headers['Content-Length'])
+        block_size = 1024
+        t = tqdm(total=file_size, unit='B', unit_scale=True, desc=filename, ascii=True)
+        with open(filename, "wb") as f:
+            for data in file_size_request.iter_content(block_size):
+                t.update(len(data))
+                f.write(data)
+    else:
+        response = requests.get(video_url)
+        with open(filename, "wb") as f:
+            f.write(response.content)
+        print("Download of {} completed.".format(filename))
 
 def download(url):
     platform = get_platform(url)
@@ -50,11 +67,8 @@ def instagram(shortcode):
     post_type = page_soup.findAll("meta", {"name" : "medium"})[0]['content']
     if post_type == "video":
         video_url = page_soup.findAll("meta", {"property" : "og:video"})[0]['content']
-        response = requests.get(video_url)
-        filename = "ig_" + shortcode
-        with open(filename + ".mp4", "wb") as f:
-            f.write(response.content)
-        print("Download of Instagram Video {} completed.".format(shortcode))
+        filename = "ig_" + shortcode + ".mp4"
+        dl(video_url, filename)
     else:
         print("Provided Instagram URL is not a video!")
 
@@ -65,16 +79,13 @@ def facebook(video_id):
     if post_type == "video":
         video_url_sd = re.search(r'sd_src:"(.+?)"', str(page_html))[1]
         video_url_hd = re.search(r'hd_src:"(.+?)"', str(page_html))[1]
+        filename = "fb_" + video_id + ".mp4"
         if video_url_hd != None:
-            response = requests.get(video_url_hd)
+            dl(video_url_hd, filename)
         elif video_url_sd != None:
-            response = requests.get(video_url_hd)
+            dl(video_url_sd, filename)
         else:
             print("Unable to download Facebook video {}.".format(video_id))
-        filename = "fb_" + video_id
-        with open(filename + ".mp4", "wb") as f:
-            f.write(response.content)
-        print("Download of Facebook Video {} completed.".format(video_id))
     else:
         print("Provided Facebook URL is not a video!")
 
@@ -83,11 +94,8 @@ def tiktok(video_id):
     page_html = requests.get("https://www.tiktok.com/embed/" + video_id, headers=headers).content
     video_url = re.search(r'urls":\["(.+?)"]', str(page_html))[1]
     if video_url != None:
-        response = requests.get(video_url, headers=headers)
-        filename = "tt_" + video_id
-        with open(filename + ".mp4", "wb") as f:
-            f.write(response.content)
-        print("Download of TikTok Video {} completed.".format(video_id))
+        filename = "tt_" + video_id + ".mp4"
+        dl(video_url, filename, headers)
     else:
         print("Failed to download this TikTok video!")
 
