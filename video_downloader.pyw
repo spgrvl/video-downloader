@@ -1,5 +1,6 @@
 from bs4 import BeautifulSoup as soup
 from tkinter import Tk, Text, Label, Entry, Button, StringVar, END
+from tkinter.ttk import Progressbar
 from tqdm import tqdm
 import argparse
 import requests
@@ -21,19 +22,23 @@ def print(msg):
         output.configure(state="disabled")
 
 def dl(video_url, filename, headers=""):
+    file_request = requests.get(video_url, stream=True)
+    file_size = int(file_request.headers['Content-Length'])
+    block_size = 1024
     if args.cli:
-        file_size_request = requests.get(video_url, stream=True, headers=headers)
-        file_size = int(file_size_request.headers['Content-Length'])
-        block_size = 1024
         t = tqdm(total=file_size, unit='B', unit_scale=True, desc=filename, ascii=True)
         with open(filename, "wb") as f:
-            for data in file_size_request.iter_content(block_size):
+            for data in file_request.iter_content(block_size):
                 t.update(len(data))
                 f.write(data)
     else:
-        response = requests.get(video_url)
+        progress_bar["maximum"] = file_size
+        progress_bar["value"] = 0
         with open(filename, "wb") as f:
-            f.write(response.content)
+            for data in file_request.iter_content(block_size):
+                progress_bar["value"] += len(data)
+                progress_bar.update()
+                f.write(data)
         print("Download of {} completed.".format(filename))
 
 def download(url):
@@ -104,7 +109,7 @@ def cli():
     download(url)
 
 def gui():
-    global output
+    global output, progress_bar
     window = Tk()
     window.title("Video Downloader")
 
@@ -120,6 +125,9 @@ def gui():
 
     output = Text(window, state="disabled", height=3, width=50)
     output.grid(row=1, column=0, columnspan=2)
+
+    progress_bar = Progressbar(window, mode="determinate", length = 470)
+    progress_bar.grid(row=2, column=0, columnspan=3)
 
     window.mainloop()
 
