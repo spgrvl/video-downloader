@@ -67,7 +67,8 @@ def get_platform(url):
         return "tt", tt_match[1]
 
 def instagram(shortcode):
-    page_html = requests.get("https://www.instagram.com/p/" + shortcode).content
+    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.121 Safari/537.36'}
+    page_html = requests.get("https://www.instagram.com/p/" + shortcode, headers=headers).content
     page_soup = soup(page_html, "html.parser")
     post_type = page_soup.findAll("meta", {"name" : "medium"})[0]['content']
     if post_type == "video":
