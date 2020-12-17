@@ -6,7 +6,7 @@ A GUI tool to download videos from various sites.
 
 * Facebook
 * Instagram
-* TikTok
+* TikTok (:warning: Might not work properly due to frequent TikTok changes!)
 
 ## How to run
 
